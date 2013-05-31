@@ -138,6 +138,7 @@ def get_drcog_datasets():
     for subject in subjects:
         sys.stdout.write('.')
         datasets = datasets + get_dataset_urls_by_subject(subject)
+        #~ print datasets
         #break # Just do the first subject for now
     
     print ""
@@ -210,15 +211,16 @@ def get_subjects():
     print "Getting list of subjects from DRCOG data catalog"
     
     subjects = []
-    subjects_url = base_url + "/datacatalog/content/welcome-regional-data-catalog?quicktabs_tabbed_menu_homepage=1"
-    
+    subjects_url = base_url + "/datacatalog/content/welcome-regional-data-catalog?quicktabs_tabbed_menu_homepage=3&qt-tabbed_menu_homepage=1"
     soup = get_soup_from_url(subjects_url)
 
     for link in soup.find_all('a'):
         href = link.get('href')
+        href = str(href)
         if href.startswith(subjects_url_prefix):
             subject = href.replace(subjects_url_prefix,"")
             subjects.append(subject)
+            
     
     print "Retrieved subjects"
     
@@ -226,20 +228,22 @@ def get_subjects():
 
 @retry(Exception)
 def get_dataset_urls_by_subject(subject, page_url=None):
+    
     global base_url, subjects_url_prefix, dataset_url_prefix
     
     datasets = []
         
     datasets_url = base_url + subjects_url_prefix + subject
+    #~ print datasets_url
     
     if page_url != None:
         datasets_url = base_url + page_url
         
-    #print datasets_url
+    #~ print datasets_url
     
     soup = get_soup_from_url(datasets_url)
     
-    #print(soup.prettify())
+    #~ print(soup.prettify())
     
     # Get all of the dataset links on the current page
     for div in soup.findAll("div", { "class" : "node" }):
@@ -248,7 +252,7 @@ def get_dataset_urls_by_subject(subject, page_url=None):
             if href.startswith(dataset_url_prefix):
                 dataset = href.replace(dataset_url_prefix,"")
                 datasets.append(dataset)
-                #print("-- " + dataset)
+                #~ print("-- " + dataset)
         
     # If there is a next link, recursively get the next page of datasets
     pager_next = soup.find("li", { "class" : "pager-next" })
@@ -256,7 +260,7 @@ def get_dataset_urls_by_subject(subject, page_url=None):
     if pager_next != None:
         next_href = pager_next.a.get('href')
         datasets = datasets + get_dataset_urls_by_subject(subject,next_href)
-    
+        
     return datasets
 
 @retry(Exception)
